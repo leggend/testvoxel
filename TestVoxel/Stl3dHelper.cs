@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -36,99 +37,141 @@ namespace TestVoxel
             {
                 fInf.Delete();
             }
+            // WriteStlAsciiFile(pathFile);
+            WriteStlBinaryFile(pathFile);
+        }
+
+        private void WriteStlBinaryFile(string pathFile)
+        {
+            using (StreamWriter file = new StreamWriter(pathFile))
+            {
+                var vectors = GetVectorsList();
+                var totalPoligons = vectors.Count / 3;
+
+                var writer = new BinaryWriter(file.BaseStream);
+
+                // write header
+                var header = new byte[80]; // can be a garbage value
+                writer.Write(header);
+
+                writer.Write((uint)totalPoligons);
+
+                for (var i = 0; i < totalPoligons; i++)
+                {
+                    var firstVector = i * 3;
+
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+
+                    writer.Write(vectors[firstVector].X);
+                    writer.Write(vectors[firstVector].Y);
+                    writer.Write(vectors[firstVector].Z);
+
+                    writer.Write(vectors[firstVector + 1].X);
+                    writer.Write(vectors[firstVector + 1].Y);
+                    writer.Write(vectors[firstVector + 1].Z);
+
+                    writer.Write(vectors[firstVector + 2].X);
+                    writer.Write(vectors[firstVector + 2].Y);
+                    writer.Write(vectors[firstVector + 2].Z);
+
+                    writer.Write((ushort)0); // garbage value
+                }
+                writer.Flush();
+            }
+        }
+
+        private void WriteStlAsciiFile(string pathFile)
+        {
             using (StreamWriter file = new StreamWriter(pathFile))
             {
                 file.WriteLine("solid");
-                var totalZ = Voxel.GetLength(0);
-                var totalY = Voxel.GetLength(1);
-                var totalX = Voxel.GetLength(2);
 
-                for (int z = 0; z < totalZ; z++)
+                var vectors = GetVectorsList();
+                var totalPoligons = vectors.Count / 3;
+
+                for (var i = 0; i < totalPoligons; i++)
                 {
-                    for (int y = 0; y < totalY; y++)
-                    {
-                        for (int x = 0; x < totalX; x++)
-                        {
-                            if (IsCellVisible(Voxel[z, y, x]))
-                            {
-                                List<CubeFace> visibleFaces = new List<CubeFace>();
-
-                                //FACE WEST
-                                if (x == 0 || !IsCellVisible(Voxel[z, y, x - 1]))
-                                {
-                                    visibleFaces.Add(CubeFace.WEST);
-                                }
-                                //FACE NORTH
-                                if (y == totalY -1 || !IsCellVisible(Voxel[z, y + 1, x]))
-                                {
-                                    visibleFaces.Add(CubeFace.NORTH);
-                                }
-                                //FACE EAST
-                                if (x == totalX - 1 || !IsCellVisible(Voxel[z, y, x + 1]))
-                                {
-                                    visibleFaces.Add(CubeFace.EAST);
-                                }
-                                //FACE SOUTH
-                                if (y == 0 || !IsCellVisible(Voxel[z, y - 1, x]))
-                                {
-                                    visibleFaces.Add(CubeFace.SOUTH);
-                                }
-                                //FACE BOTTOM
-                                if (z == 0 || !IsCellVisible(Voxel[z - 1, y, x]))
-                                {
-                                    visibleFaces.Add(CubeFace.BOTTOM);
-                                }
-                                //FACE TOP
-                                if (z == totalZ - 1|| !IsCellVisible(Voxel[z + 1, y, x]))
-                                {
-                                    visibleFaces.Add(CubeFace.TOP);
-                                }
-
-                                if (visibleFaces.Count < 6)
-                                {
-                                    foreach(var face in visibleFaces)
-                                    {
-                                        DrawCubeFace(file, face, x, y, z);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    var firstVector = i * 3;
+                    var normal = "0 0 0";
+                    file.WriteLine($"\tfacet normal {normal}");
+                    file.WriteLine("\t\touter loop");
+                    file.WriteLine($"\t\t\tvertex {vectors[firstVector].X} {vectors[firstVector].Y} {vectors[firstVector].Z}");
+                    file.WriteLine($"\t\t\tvertex {vectors[firstVector + 1].X} {vectors[firstVector + 1].Y} {vectors[firstVector + 1].Z}");
+                    file.WriteLine($"\t\t\tvertex {vectors[firstVector + 2].X} {vectors[firstVector + 2].Y} {vectors[firstVector + 2].Z}");
+                    file.WriteLine("\t\tendloop");
+                    file.WriteLine("\tendfacet");
                 }
-
                 file.WriteLine("endsolid");
 
             }
         }
 
+        private List<Vector3> GetVectorsList()
+        {
+            List<Vector3> vectors = new List<Vector3>();
+
+            var totalZ = Voxel.GetLength(0);
+            var totalY = Voxel.GetLength(1);
+            var totalX = Voxel.GetLength(2);
+
+            for (int z = 0; z < totalZ; z++)
+            {
+                for (int y = 0; y < totalY; y++)
+                {
+                    for (int x = 0; x < totalX; x++)
+                    {
+                        if (IsCellVisible(Voxel[z, y, x]))
+                        {
+                            List<CubeFace> visibleFaces = new List<CubeFace>();
+
+                            //FACE WEST
+                            if (x == 0 || !IsCellVisible(Voxel[z, y, x - 1]))
+                            {
+                                visibleFaces.Add(CubeFace.WEST);
+                            }
+                            //FACE NORTH
+                            if (y == totalY - 1 || !IsCellVisible(Voxel[z, y + 1, x]))
+                            {
+                                visibleFaces.Add(CubeFace.NORTH);
+                            }
+                            //FACE EAST
+                            if (x == totalX - 1 || !IsCellVisible(Voxel[z, y, x + 1]))
+                            {
+                                visibleFaces.Add(CubeFace.EAST);
+                            }
+                            //FACE SOUTH
+                            if (y == 0 || !IsCellVisible(Voxel[z, y - 1, x]))
+                            {
+                                visibleFaces.Add(CubeFace.SOUTH);
+                            }
+                            //FACE BOTTOM
+                            if (z == 0 || !IsCellVisible(Voxel[z - 1, y, x]))
+                            {
+                                visibleFaces.Add(CubeFace.BOTTOM);
+                            }
+                            //FACE TOP
+                            if (z == totalZ - 1 || !IsCellVisible(Voxel[z + 1, y, x]))
+                            {
+                                visibleFaces.Add(CubeFace.TOP);
+                            }
+
+                            // Exclude etire cube for optimization
+                            if (visibleFaces.Count < 6)
+                            {
+                                visibleFaces.ForEach((face) => vectors.AddRange(GetCubeFaceVectors(face, x, y, z)));
+                            }
+                        }
+                    }
+                }
+            }
+            return vectors;
+        }
+
         private bool IsCellVisible(byte value)
         {
             return value >= MinVisibleValue && value <= MaxVisibleValue;
-        }
-
-        private void DrawCubeFace(StreamWriter file, CubeFace face, int x, int y, int z)
-        {
-            var normal = GetFacetNormal(face);
-            var vectors = GetCubeFaceVectors(face, x, y, z);
-            file.WriteLine($"\tfacet normal {normal}");
-            file.WriteLine("\t\touter loop");
-            file.WriteLine($"\t\t\tvertex {vectors[0].X} {vectors[0].Y} {vectors[0].Z}");
-            file.WriteLine($"\t\t\tvertex {vectors[1].X} {vectors[1].Y} {vectors[1].Z}");
-            file.WriteLine($"\t\t\tvertex {vectors[2].X} {vectors[2].Y} {vectors[2].Z}");
-            file.WriteLine("\t\tendloop");
-            file.WriteLine("\tendfacet");
-
-            file.WriteLine($"\tfacet normal {normal}");
-            file.WriteLine("\t\touter loop");
-            file.WriteLine($"\t\t\tvertex {vectors[3].X} {vectors[3].Y} {vectors[3].Z}");
-            file.WriteLine($"\t\t\tvertex {vectors[4].X} {vectors[4].Y} {vectors[4].Z}");
-            file.WriteLine($"\t\t\tvertex {vectors[5].X} {vectors[5].Y} {vectors[5].Z}");
-            file.WriteLine("\t\tendloop");
-            file.WriteLine("\tendfacet");
-
-            foreach (var vector in vectors)
-            {
-            }
         }
 
         private string GetFacetNormal(CubeFace face)
