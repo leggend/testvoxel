@@ -1,0 +1,54 @@
+################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+# Solution
+.idea/
+*.suo
+.vs
+/packages
+*.xproj.user
+*.project.lock.json
+*.csproj.user
+*.csproj.orig
+*.cs.orig
+StyleCop.Cache
+*/StyleCop.Cache
+*/*/StyleCop.Cache
+StyleCopViolations.xml
+
+# directories vs
+**/bin
+**/obj
+**/v14
+
+# other directories
+**/publish
+publish
+
+# js
+**/node_modules
+# **/wwwroot/lib
+# **/wwwroot/js/modules
+# **/wwwroot/js/app/modules
+# **/wwwroot/_references.js
+
+# tests && node modules
+**/karma-*
+**/coverage
+**/npm-*.log
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# uml
+*.uml
+
+#md
+**/Docs/UMLs/*.md
+
+#installer
+**/installer/Output/*.exe
